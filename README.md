@@ -49,7 +49,7 @@ This application was initially developed for my Tekken 8 stall at my college tec
 
 1.  **Clone the repository:**
     ```bash
-    git clone [<repository-url>](https://github.com/chandranshB/Tekken-leaderboard)
+    git clone https://github.com/chandranshB/Tekken-leaderboard
     cd tekken-leaderboard
     ```
 2.  **Ensure all necessary files are present:** The project requires specific JavaScript files to function correctly, which are referenced by the HTML pages but may not be included in the repository yet. Based on the HTML references, the following files are needed:
