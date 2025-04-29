@@ -1,0 +1,1615 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tekken Fight Club Dashboard</title>
+    <script src="database.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Chakra+Petch:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --primary: #00F0FF;
+        --secondary: #FF003C;
+        --accent: #FFCC00;
+        --dark: #0D0E13;
+        --darker: #07080C;
+        --light: #F2F2F2;
+        --text: #E1E1E6;
+        --success: #00FF66;
+        --warning: #FF9000;
+        --danger: #FF003C;
+        --card-bg: rgba(20, 23, 34, 0.8);
+        --glass: rgba(255, 255, 255, 0.05);
+      }
+      
+      /* Countdown styling */
+      .countdown-digit {
+        display: inline-block;
+        padding: 0 3px;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: bold;
+      }
+      
+      @keyframes pulse-digit {
+        0% { opacity: 0.7; }
+        50% { opacity: 1; }
+        100% { opacity: 0.7; }
+      }
+      
+      #countdown .countdown-digit:last-child {
+        animation: pulse-digit 1s infinite;
+      }
+      
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      
+      html, body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Chakra Petch', sans-serif;
+        background-color: var(--darker);
+        color: var(--text);
+        height: 100%;
+        overflow-x: hidden;
+        background-image: 
+          radial-gradient(circle at 20% 35%, rgba(0, 240, 255, 0.15) 0%, transparent 40%),
+          radial-gradient(circle at 75% 65%, rgba(255, 0, 60, 0.15) 0%, transparent 40%);
+        background-attachment: fixed;
+      }
+      
+      body {
+        position: relative;
+      }
+      
+      body::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('data:image/png;base64,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. 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');
+        opacity: 0.2;
+        pointer-events: none;
+        z-index: -1;
+      }
+      
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+        height: 100vh;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        overflow: hidden;
+      }
+      
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 0;
+        position: relative;
+        z-index: 10;
+        margin-bottom: 10px;
+      }
+      
+      .header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: linear-gradient(90deg, 
+          transparent, 
+          rgba(0, 240, 255, 0.3), 
+          transparent
+        );
+      }
+      
+      .logo {
+        display: flex;
+        align-items: center;
+      }
+      
+      .logo h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 800;
+        font-size: 2.2rem;
+        text-transform: uppercase;
+        color: var(--text);
+        margin: 0;
+        position: relative;
+        z-index: 1;
+      }
+      
+      .logo h1 span {
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+        display: inline-block;
+      }
+      
+      .logo::before {
+        content: '';
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        background: radial-gradient(circle, rgba(0, 240, 255, 0.4) 0%, transparent 70%);
+        border-radius: 50%;
+        transform: translateX(-30px);
+        z-index: 0;
+        filter: blur(10px);
+      }
+      
+      .nav-links {
+        display: flex;
+        gap: 15px;
+      }
+      
+      .nav-link {
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.6rem 1.2rem;
+        background-color: var(--card-bg);
+        border-radius: 4px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        border: 1px solid rgba(0, 240, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+      }
+      
+      .nav-link::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.1), transparent);
+        transition: all 0.6s ease;
+        z-index: -1;
+      }
+      
+      .nav-link:hover::before {
+        left: 100%;
+      }
+      
+      .nav-link:hover {
+        border-color: var(--primary);
+        box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+        transform: translateY(-2px);
+      }
+      
+      .dashboard-layout {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 20px;
+        height: 100%;
+        overflow: hidden;
+      }
+      
+      .main-content {
+        display: grid;
+        grid-template-rows: auto minmax(350px, 1fr) auto;
+        gap: 20px;
+        overflow: hidden;
+        height: 100%;
+      }
+      
+      .search-bar {
+        position: relative;
+      }
+      
+      .search-bar input {
+        width: 100%;
+        padding: 12px 20px 12px 45px;
+        background-color: var(--card-bg);
+        color: var(--text);
+        border: 1px solid rgba(0, 240, 255, 0.2);
+        border-radius: 6px;
+        font-family: 'Chakra Petch', sans-serif;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+      }
+      
+      .search-bar input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+      }
+      
+      .search-bar::before {
+        content: '⌕';
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--primary);
+        font-size: 20px;
+        font-weight: bold;
+      }
+      
+      .players-table {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid rgba(0, 240, 255, 0.2);
+        box-shadow: 0 5px 25px rgba(0, 0, 20, 0.3);
+        backdrop-filter: blur(10px);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .table-header {
+        background-color: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        padding: 15px 20px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      
+      .table-header h2 {
+        color: var(--text);
+        margin: 0;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      .table-header h2::before {
+        content: '';
+        display: block;
+        width: 8px;
+        height: 20px;
+        background: linear-gradient(180deg, var(--primary), transparent);
+        border-radius: 4px;
+      }
+      
+      .table-content {
+        padding: 0;
+        overflow-y: auto;
+        flex-grow: 1;
+      }
+      
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+      
+      th {
+        background-color: rgba(13, 14, 19, 0.5);
+        color: var(--primary);
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid rgba(0, 240, 255, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        backdrop-filter: blur(10px);
+      }
+      
+      th.active::after {
+        content: "↓";
+        margin-left: 5px;
+        color: var(--secondary);
+      }
+      
+      td {
+        padding: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.2s ease;
+      }
+      
+      tr {
+        transition: all 0.3s ease;
+      }
+      
+      tr:hover {
+        background-color: rgba(0, 240, 255, 0.05);
+        transform: translateX(4px);
+      }
+      
+      /* Player styles */
+      .player-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      
+      .player-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: var(--darker);
+        font-family: 'Orbitron', sans-serif;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .player-avatar::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+          transparent, 
+          transparent, 
+          transparent, 
+          rgba(255, 255, 255, 0.4)
+        );
+        transform: rotate(45deg);
+        animation: shine 3s infinite;
+      }
+      
+      @keyframes shine {
+        0% { transform: rotate(45deg) translateY(100%); }
+        100% { transform: rotate(45deg) translateY(-100%); }
+      }
+      
+      .player-name {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+      
+      /* Rankings */
+      .rank-badge, .rank-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        margin-right: 10px;
+        font-weight: bold;
+        font-size: 12px;
+        color: var(--dark);
+        font-family: 'Orbitron', sans-serif;
+      }
+      
+      .rank-number {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.7);
+        box-shadow: none;
+      }
+      
+      tr.rank-1 .rank-badge {
+        background: linear-gradient(135deg, var(--accent), #FFA41B);
+        box-shadow: 0 0 15px rgba(255, 204, 0, 0.5);
+      }
+      
+      tr.rank-2 .rank-badge {
+        background: linear-gradient(135deg, #E0E0E0, #BBBBBB);
+        box-shadow: 0 0 10px rgba(224, 224, 224, 0.4);
+      }
+      
+      tr.rank-3 .rank-badge {
+        background: linear-gradient(135deg, #CD7F32, #8B5A2B);
+        box-shadow: 0 0 8px rgba(205, 127, 50, 0.4);
+      }
+      
+      /* Top 3 rows */
+      tr.rank-1 {
+        background: linear-gradient(90deg, rgba(255, 204, 0, 0.1), transparent);
+      }
+      
+      tr.rank-2 {
+        background: linear-gradient(90deg, rgba(224, 224, 224, 0.1), transparent);
+      }
+      
+      tr.rank-3 {
+        background: linear-gradient(90deg, rgba(205, 127, 50, 0.07), transparent);
+      }
+      
+      /* Win rate styles */
+      .win-rate {
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: inline-block;
+      }
+      
+      .high-winrate {
+        background-color: rgba(0, 255, 102, 0.1);
+        color: var(--success);
+        border-left: 2px solid var(--success);
+      }
+      
+      .medium-winrate {
+        background-color: rgba(255, 144, 0, 0.1);
+        color: var(--warning);
+        border-left: 2px solid var(--warning);
+      }
+      
+      .low-winrate {
+        background-color: rgba(255, 0, 60, 0.1);
+        color: var(--danger);
+        border-left: 2px solid var(--danger);
+      }
+      
+      /* Matches section */
+      .matches-section {
+        margin-top: auto;
+      }
+      
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+      
+      .section-header h2 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text);
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      
+      .matches-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        max-height: 250px;
+        overflow-y: auto;
+        padding-right: 5px;
+        margin-bottom: 20px;
+      }
+      
+      .match-card {
+        background: linear-gradient(135deg, var(--dark), rgba(13, 14, 19, 0.7));
+        backdrop-filter: blur(10px);
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid rgba(0, 240, 255, 0.1);
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+      }
+      
+      .match-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        opacity: 0.5;
+        transition: opacity 0.3s ease;
+      }
+      
+      .match-card:hover {
+        transform: translateY(-8px);
+        border-color: var(--primary);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      }
+      
+      .match-card:hover::before {
+        opacity: 1;
+      }
+      
+      .match-card.current-match {
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+        border-color: var(--primary);
+      }
+      
+      .match-card.player1-winning {
+        border-left: 2px solid var(--success);
+      }
+      
+      .match-card.player2-winning {
+        border-right: 2px solid var(--danger);
+      }
+      
+      .match-header {
+        background-color: rgba(0, 0, 0, 0.4);
+        padding: 12px;
+        font-family: 'Orbitron', sans-serif;
+        color: var(--primary);
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+        letter-spacing: 1px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        backdrop-filter: blur(10px);
+      }
+      
+      .match-header .match-time {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.6);
+        font-family: 'Chakra Petch', sans-serif;
+        font-weight: normal;
+      }
+      
+      .match-content {
+        padding: 15px;
+      }
+      
+      .match-players {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      .match-player {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 8px;
+      }
+      
+      .vs-badge {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 50%;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: bold;
+        font-size: 14px;
+        color: var(--darker);
+        box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+      }
+      
+      .match-player-name {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-top: 5px;
+      }
+      
+      .match-department {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.6);
+        margin-bottom: 5px;
+      }
+      
+      .win-rate-display {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 4px;
+      }
+      
+      /* Sidebar */
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        overflow-y: auto;
+        padding-right: 5px;
+        max-height: calc(100vh - 100px);
+      }
+      
+      .sidebar-card {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        border: 1px solid rgba(0, 240, 255, 0.2);
+        overflow: hidden;
+        box-shadow: 0 5px 25px rgba(0, 0, 20, 0.3);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+      }
+      
+      .sidebar-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0, 0, 20, 0.4);
+        border-color: rgba(0, 240, 255, 0.3);
+      }
+      
+      .card-header {
+        padding: 15px;
+        background-color: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+      }
+      
+      .card-header h3 {
+        margin: 0;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+      }
+      
+      .card-header h3::before {
+        content: '';
+        display: inline-block;
+        width: 4px;
+        height: 16px;
+        margin-right: 10px;
+        background: linear-gradient(180deg, var(--primary), var(--secondary));
+        border-radius: 2px;
+      }
+      
+      .card-content {
+        padding: 15px;
+      }
+      
+      .stat-group {
+        margin-bottom: 20px;
+      }
+      
+      .stat-label {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 5px;
+      }
+      
+      .stat-value {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text);
+        margin: 0;
+        line-height: 1.2;
+      }
+      
+      .prize-pool {
+        color: var(--accent);
+        text-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
+        font-size: 2rem;
+        background: linear-gradient(90deg, #FFCC00, #FFA41B);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        display: inline-block;
+      }
+      
+      .progressbar {
+        height: 8px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        margin-top: 10px;
+        overflow: hidden;
+      }
+      
+      .progressbar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), #FFA41B);
+        border-radius: 4px;
+        width: 50%;
+        transition: width 1s cubic-bezier(0.65, 0, 0.35, 1);
+      }
+      
+      .department-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .department-item {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        padding: 12px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.2s ease;
+        border-left: 3px solid transparent;
+      }
+      
+      .department-item:hover {
+        background-color: rgba(0, 240, 255, 0.05);
+        transform: translateX(4px);
+        border-left-color: var(--primary);
+      }
+      
+      .department-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .department-item .dept-name {
+        font-weight: 600;
+        color: var(--text);
+      }
+      
+      .department-item .count {
+        background-color: rgba(0, 240, 255, 0.1);
+        color: var(--primary);
+        border-radius: 4px;
+        padding: 3px 10px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        min-width: 40px;
+        text-align: center;
+      }
+      
+      .department-item .count::after {
+        content: " players";
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: normal;
+      }
+      
+      /* QR Code */
+      .qr-code {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 120px;
+        height: 120px;
+        background-color: white;
+        border-radius: 10px;
+        overflow: hidden;
+        padding: 8px;
+        box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
+        border: 2px solid var(--accent);
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        z-index: 100;
+      }
+      
+      .qr-code:hover {
+        transform: scale(1.1);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), 
+                    0 0 20px rgba(255, 204, 0, 0.4);
+      }
+      
+      .qr-code::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, 
+          transparent, 
+          transparent, 
+          rgba(255, 255, 255, 0.1)
+        );
+      }
+      
+      .qr-code img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+        border-radius: 4px;
+      }
+      
+      /* Status */
+      .status-indicator {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        background-color: var(--dark);
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        z-index: 1000;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 240, 255, 0.2);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+        cursor: move; /* Indicate it's draggable */
+        display: flex;
+        align-items: center;
+      }
+      
+      .status-indicator:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+      }
+      
+      .status-indicator.dragging {
+        opacity: 0.8;
+        box-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
+        transform: scale(1.05);
+      }
+      
+      .status {
+        font-weight: 600;
+        margin-left: 4px;
+      }
+      
+      .status.connected {
+        color: var(--success);
+      }
+      
+      .status.error {
+        color: var(--danger);
+      }
+      
+      .last-sync {
+        margin-left: 8px;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.7rem;
+      }
+      
+      /* Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: rgba(0, 240, 255, 0.2);
+        border-radius: 10px;
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 240, 255, 0.4);
+      }
+      
+      /* Tournament header */
+      .tournament-header {
+        border: 1px solid rgba(255, 204, 0, 0.3);
+        background: linear-gradient(90deg, rgba(255, 204, 0, 0.1), transparent);
+        color: var(--accent);
+        text-align: center;
+        font-weight: 700;
+        padding: 10px;
+        font-family: 'Orbitron', sans-serif;
+        letter-spacing: 1px;
+        border-radius: 6px;
+        text-transform: uppercase;
+      }
+      
+      /* Media Queries */
+      @media (max-width: 1100px) {
+        .dashboard-layout {
+          grid-template-columns: 1fr 280px;
+        }
+        
+        .matches-grid {
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+      }
+      
+      @media (max-width: 900px) {
+        .dashboard-layout {
+          grid-template-columns: 1fr;
+          grid-template-rows: 1fr auto;
+        }
+        
+        .sidebar {
+          max-height: none;
+          overflow: visible;
+        }
+        
+        .matches-grid {
+          max-height: 400px;
+        }
+      }
+      
+      @media (max-width: 600px) {
+        .header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 15px;
+          margin-bottom: 20px;
+        }
+        
+        .logo h1 {
+          font-size: 1.8rem;
+        }
+        
+        .nav-links {
+          width: 100%;
+          justify-content: space-between;
+        }
+        
+        .matches-grid {
+          grid-template-columns: 1fr;
+        }
+        
+        .qr-code {
+          width: 80px;
+          height: 80px;
+          bottom: 20px;
+          right: 20px;
+        }
+      }
+      
+      /* Animations */
+      @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+      }
+      
+      @keyframes float {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0); }
+      }
+      
+      .current-match-indicator {
+        animation: pulse 2s infinite;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .pulse-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--secondary);
+        display: inline-block;
+      }
+    </style>
+  <script src="https://lib.yourware.so/yourware-lib.umd.js" id="yourware-lib"></script></head>
+  <body onload="updateCountdown()">
+    <div class="status-indicator" id="db-status">Database: <span class="status">Connecting...</span></div>
+    <script src="index-db.js"></script>
+    
+    <script>
+      // Make the status indicator draggable
+      document.addEventListener('DOMContentLoaded', function() {
+        const statusIndicator = document.getElementById('db-status');
+        let isDragging = false;
+        let offsetX, offsetY;
+
+        // Load saved position from localStorage if available
+        const savedPosition = localStorage.getItem('statusPosition');
+        if (savedPosition) {
+          try {
+            const position = JSON.parse(savedPosition);
+            statusIndicator.style.left = position.left;
+            statusIndicator.style.top = position.top;
+            statusIndicator.style.bottom = 'auto';
+            statusIndicator.style.right = 'auto';
+          } catch (e) {
+            console.error('Error loading saved position:', e);
+          }
+        }
+        
+        // Handle mouse down event to start dragging
+        statusIndicator.addEventListener('mousedown', function(e) {
+          isDragging = true;
+          
+          // Calculate the offset from the mouse to the element's top-left corner
+          const rect = statusIndicator.getBoundingClientRect();
+          offsetX = e.clientX - rect.left;
+          offsetY = e.clientY - rect.top;
+          
+          // Add a dragging class for visual feedback
+          statusIndicator.classList.add('dragging');
+          
+          // Prevent text selection during drag
+          e.preventDefault();
+        });
+        
+        // Handle mouse move event to drag the element
+        document.addEventListener('mousemove', function(e) {
+          if (!isDragging) return;
+          
+          // Calculate new position based on mouse position and offset
+          let left = e.clientX - offsetX;
+          let top = e.clientY - offsetY;
+          
+          // Keep element within viewport bounds
+          const width = statusIndicator.offsetWidth;
+          const height = statusIndicator.offsetHeight;
+          
+          left = Math.max(10, Math.min(left, window.innerWidth - width - 10));
+          top = Math.max(10, Math.min(top, window.innerHeight - height - 10));
+          
+          // Set the new position
+          statusIndicator.style.left = left + 'px';
+          statusIndicator.style.top = top + 'px';
+          statusIndicator.style.bottom = 'auto';
+          statusIndicator.style.right = 'auto';
+        });
+        
+        // Handle mouse up event to stop dragging
+        document.addEventListener('mouseup', function() {
+          if (isDragging) {
+            // Save position to localStorage
+            const position = {
+              left: statusIndicator.style.left,
+              top: statusIndicator.style.top
+            };
+            localStorage.setItem('statusPosition', JSON.stringify(position));
+            
+            // Remove visual feedback
+            statusIndicator.classList.remove('dragging');
+            isDragging = false;
+          }
+        });
+        
+        // Handle mouse leaving the window
+        document.addEventListener('mouseleave', function() {
+          if (isDragging) {
+            statusIndicator.classList.remove('dragging');
+            isDragging = false;
+          }
+        });
+      });
+    </script>
+    
+    <div class="container">
+      <header class="header">
+        <div class="logo">
+          <h1><span>TEKKEN</span> FIGHT CLUB</h1>
+        </div>
+        <nav class="nav-links">
+          <a href="admin.html" class="nav-link">Admin Panel</a>
+          <a href="tournaments.html" class="nav-link">Tournaments</a>
+        </nav>
+      </header>
+      
+      <main class="dashboard-layout">
+        <div class="main-content">
+          <div class="search-bar">
+            <input type="text" id="player-search" placeholder="Search players by name...">
+          </div>
+          
+          <div class="players-table">
+            <div class="table-header">
+              <h2>Regular Match Rankings</h2>
+            </div>
+            <div class="table-content">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Player</th>
+                    <th class="active">Wins</th>
+                    <th>Win Rate</th>
+                    <th>Matches</th>
+                    <th>Department</th>
+                  </tr>
+                </thead>
+                <tbody id="players-data">
+                  <!-- Player data will be inserted here by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div class="matches-section">
+            <div class="section-header">
+              <h2>Current Matches</h2>
+            </div>
+            <div class="matches-grid" id="matches-display">
+              <!-- Match cards will be inserted here -->
+            </div>
+          </div>
+        </div>
+        
+        <div class="sidebar">
+          <div class="sidebar-card">
+            <div class="card-header">
+              <h3>Tournament Info</h3>
+            </div>
+            <div class="card-content">
+              <div class="stat-group">
+                <div class="stat-label">Tournament Start Time</div>
+                <div class="stat-value" id="start-time">1:30 PM IST</div>
+              </div>
+              
+              <div class="stat-group">
+                <div class="stat-label">Prize Pool</div>
+                <div class="stat-value prize-pool" id="prize-pool">0 rs</div>
+                <div class="progressbar">
+                  <div class="progressbar-fill" id="prize-pool-fill"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="sidebar-card">
+            <div class="card-header">
+              <h3>Department Stats</h3>
+            </div>
+            <div class="card-content">
+              <div class="department-list" id="department-stats">
+                <!-- Department data will be inserted here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    
+    <div class="qr-code">
+      <img src="qr-chandu.jpg" alt="Payment QR">
+    </div>
+    
+    <script>
+      // Load data from localStorage or use default
+      const players = JSON.parse(localStorage.getItem('tekkenPlayers')) || [
+        {
+          id: 1,
+          name: "Knee",
+          character: "Bryan Fury",
+          wins: 482,
+          losses: 201,
+          department: "Computer Science"
+        },
+        {
+          id: 2,
+          name: "JDCR",
+          character: "Dragunov",
+          wins: 429,
+          losses: 198,
+          department: "Computer Science"
+        },
+        {
+          id: 3,
+          name: "Arslan Ash",
+          character: "Zafina",
+          wins: 401,
+          losses: 187,
+          department: "Computer Science"
+        },
+        {
+          id: 4,
+          name: "Qudans",
+          character: "Devil Jin",
+          wins: 387,
+          losses: 213,
+          department: "Computer Science"
+        },
+        {
+          id: 5,
+          name: "LowHigh",
+          character: "Steve Fox",
+          wins: 356,
+          losses: 190,
+          department: "Computer Science"
+        },
+        {
+          id: 6,
+          name: "Saint",
+          character: "Jack-7",
+          wins: 342,
+          losses: 201,
+          department: "Computer Science"
+        },
+        {
+          id: 7,
+          name: "Rangchu",
+          character: "Panda",
+          wins: 298,
+          losses: 187,
+          department: "Computer Science"
+        },
+        {
+          id: 8,
+          name: "Anakin",
+          character: "Paul Phoenix",
+          wins: 267,
+          losses: 157,
+          department: "Computer Science"
+        },
+        {
+          id: 9,
+          name: "UltimateEdge",
+          character: "Eddy Gordo",
+          wins: 234,
+          losses: 198,
+          department: "Computer Science"
+        },
+        {
+          id: 10,
+          name: "RushCrow",
+          character: "Jin Kazama",
+          wins: 189,
+          losses: 210,
+          department: "Computer Science"
+        },
+        {
+          id: 11,
+          name: "BlueStorm",
+          character: "Lars",
+          wins: 156,
+          losses: 201,
+          department: "Computer Science"
+        },
+        {
+          id: 12,
+          name: "SilentHawk",
+          character: "Lili",
+          wins: 143,
+          losses: 221,
+          department: "Computer Science"
+        }
+      ];
+      
+      // Get matches from localStorage
+      const currentMatches = JSON.parse(localStorage.getItem('tekkenMatches')) || [];
+      
+      // Function to calculate win rate
+      function calculateWinRate(wins, losses) {
+        const total = wins + losses;
+        return total > 0 ? ((wins / total) * 100).toFixed(1) : "0.0";
+      }
+
+      // Function to get win rate class based on percentage
+      function getWinRateClass(winRate) {
+        const rate = parseFloat(winRate);
+        if (rate >= 60) return "high-winrate";
+        if (rate >= 45) return "medium-winrate";
+        return "low-winrate";
+      }
+      
+      // Function to update department statistics
+      function updateDepartmentStats() {
+        const departments = {};
+        
+        // Just use Computer Science department
+        const deptContainer = document.getElementById('department-stats');
+        deptContainer.innerHTML = '';
+        
+        const deptElement = document.createElement('div');
+        deptElement.className = 'department-item';
+        deptElement.innerHTML = `
+          <span class="dept-name">Computer Science</span>
+          <span class="count">${players.length}</span>
+        `;
+        deptContainer.appendChild(deptElement);
+      }
+      
+      // Function to update tournament stats
+      function updateTournamentStats() {
+        // Get tournament info from localStorage or use default values
+        const tournamentInfo = JSON.parse(localStorage.getItem('tekkenTournamentInfo')) || {
+          prizePool: 0,
+          maxPrizePool: 2000,
+          targetTime: null
+        };
+        
+        const prizePool = tournamentInfo.prizePool;
+        const maxPrizePool = tournamentInfo.maxPrizePool;
+        
+        // Set start time display (always show 1:30 PM IST regardless of actual target time)
+        document.getElementById('start-time').textContent = '1:30 PM IST';
+        
+        // If we have a target time in tournamentInfo, use it for countdown
+        if (tournamentInfo.targetTime && !localStorage.getItem('tournamentTargetTime')) {
+          localStorage.setItem('tournamentTargetTime', tournamentInfo.targetTime);
+        }
+        
+        // Update countdown timer
+        updateCountdown();
+        
+        // Update prize pool
+        document.getElementById('prize-pool').textContent = `${prizePool} rs`;
+        
+        // Animate prize pool fill based on percentage of max prize pool
+        const fillPercentage = Math.min(100, (prizePool / maxPrizePool) * 100);
+        document.getElementById('prize-pool-fill').style.width = `${fillPercentage}%`;
+      }
+      
+      // Function to update countdown timer
+      function updateCountdown() {
+        const now = new Date();
+        
+        // Get tournament time from localStorage, set by admin panel
+        // If not available, default to 1:30 PM on the next available day
+        let tournamentTimeStr = localStorage.getItem('tournamentTargetTime');
+        let tournamentDate;
+        
+        if (!tournamentTimeStr) {
+          // Admin hasn't set a time yet, use default (1:30 PM today or tomorrow)
+          tournamentDate = new Date();
+          tournamentDate.setHours(13, 30, 0, 0); // 1:30 PM local time
+          
+          // If time already passed today, set for tomorrow
+          if (now > tournamentDate) {
+            tournamentDate.setDate(tournamentDate.getDate() + 1);
+          }
+          
+          // Save this default to localStorage so it persists across reloads
+          localStorage.setItem('tournamentTargetTime', tournamentDate.toISOString());
+        } else {
+          // Use the administrator-provided time
+          tournamentDate = new Date(tournamentTimeStr);
+        }
+        
+        // Calculate time difference
+        const diff = tournamentDate - now;
+        
+        // Calculate hours, minutes, seconds
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        // Format countdown display
+        const countdownEl = document.getElementById('countdown');
+        
+        // Style for the countdown with custom styling and animation
+        countdownEl.innerHTML = `<span class="countdown-digit">${hours.toString().padStart(2, '0')}</span>:<span class="countdown-digit">${minutes.toString().padStart(2, '0')}</span>:<span class="countdown-digit">${seconds.toString().padStart(2, '0')}</span>`;
+        
+        // Add blinking effect if less than 1 hour
+        if (hours < 1) {
+          countdownEl.style.color = '#FF003C';
+          countdownEl.classList.add('glow-text');
+        } else {
+          countdownEl.style.color = '';
+          countdownEl.classList.remove('glow-text');
+        }
+      }
+
+      // Function to render players data
+      function renderPlayers(playersList) {
+        const tableBody = document.getElementById("players-data");
+        tableBody.innerHTML = "";
+        
+        // Check if there are tournament players available
+        const tournamentPlayers = JSON.parse(localStorage.getItem('tekkenTournamentPlayers')) || [];
+        let displayPlayers = playersList;
+        
+        // If tournament players are available, show tournament players instead of regular players
+        if (tournamentPlayers.length > 0) {
+          // Add a header row
+          const headerRow = document.createElement("tr");
+          headerRow.innerHTML = `<td colspan="5" class="tournament-header">TOURNAMENT PLAYERS</td>`;
+          tableBody.appendChild(headerRow);
+          
+          // Display tournament players (they may not have wins/losses yet)
+          tournamentPlayers.forEach((player, index) => {
+            const winRate = calculateWinRate(player.wins || 0, player.losses || 0);
+            const totalMatches = (player.wins || 0) + (player.losses || 0);
+            
+            const row = document.createElement("tr");
+            
+            // Add ranking class for top 3 players
+            if (index < 3) {
+              row.classList.add(`rank-${index+1}`);
+            }
+            
+            row.innerHTML = `
+              <td>
+                <div class="player-cell">
+                  <div class="${index < 3 ? 'rank-badge' : 'rank-number'}">${index+1}</div>
+                  <div class="player-name">${player.name}</div>
+                </div>
+              </td>
+              <td>${player.wins || 0}</td>
+              <td><span class="win-rate ${getWinRateClass(winRate)}">${winRate}%</span></td>
+              <td>${totalMatches}</td>
+              <td>Computer Science</td>
+            `;
+            
+            tableBody.appendChild(row);
+          });
+        } else {
+          // Regular players
+          playersList.forEach((player, index) => {
+            const winRate = calculateWinRate(player.wins, player.losses);
+            const totalMatches = player.wins + player.losses;
+            
+            const row = document.createElement("tr");
+            
+            // Add ranking class for top 3 players
+            if (index < 3) {
+              row.classList.add(`rank-${index+1}`);
+            }
+            
+            row.innerHTML = `
+              <td>
+                <div class="player-cell">
+                  <div class="${index < 3 ? 'rank-badge' : 'rank-number'}">${index+1}</div>
+                  <div class="player-name">${player.name}</div>
+                </div>
+              </td>
+              <td>${player.wins}</td>
+              <td><span class="win-rate ${getWinRateClass(winRate)}">${winRate}%</span></td>
+              <td>${totalMatches}</td>
+              <td>Computer Science</td>
+            `;
+            
+            tableBody.appendChild(row);
+          });
+        }
+        
+        // Update tournament stats whenever players are rendered
+        updateTournamentStats();
+        updateDepartmentStats();
+      }
+
+      // Function to sort players by different criteria
+      function sortPlayers(criteria, order = 'desc', playersList = players) {
+        return [...playersList].sort((a, b) => {
+          let valueA, valueB;
+          
+          if (criteria === 'wins') {
+            valueA = a.wins;
+            valueB = b.wins;
+          } else if (criteria === 'winrate') {
+            valueA = a.wins / (a.wins + a.losses) || 0;
+            valueB = b.wins / (b.wins + b.losses) || 0;
+          } else if (criteria === 'played') {
+            valueA = a.wins + a.losses;
+            valueB = b.wins + b.losses;
+          }
+          
+          return order === 'desc' ? valueB - valueA : valueA - valueB;
+        });
+      }
+      
+      // Format time ago
+      function formatTimeAgo(timestamp) {
+        const now = new Date();
+        const past = new Date(timestamp);
+        const diffMs = now - past;
+        
+        const seconds = Math.floor(diffMs / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        
+        if (hours > 0) {
+          return `${hours}h ago`;
+        } else if (minutes > 0) {
+          return `${minutes}m ago`;
+        } else {
+          return `${seconds}s ago`;
+        }
+      }
+      
+      // Function to render matches
+      function renderMatches() {
+        const matchesContainer = document.getElementById('matches-display');
+        matchesContainer.innerHTML = '';
+        
+        if (currentMatches.length === 0) {
+          matchesContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px; color: rgba(255, 255, 255, 0.5); font-style: italic;">No matches currently scheduled</div>';
+          return;
+        }
+        
+        // Sort matches by timestamp (when they were created/queued)
+        const sortedMatches = [...currentMatches].sort((a, b) => 
+          new Date(a.timestamp) - new Date(b.timestamp)
+        );
+        
+        sortedMatches.forEach((match, index) => {
+          const player1 = players.find(p => p.id === match.player1Id);
+          const player2 = players.find(p => p.id === match.player2Id);
+          
+          if (player1 && player2) {
+            const matchCard = document.createElement('div');
+            
+            // Calculate win rates
+            const winRate1 = calculateWinRate(player1.wins, player1.losses);
+            const winRate2 = calculateWinRate(player2.wins, player2.losses);
+            
+            // Determine which player has higher win rate
+            const winRateClass1 = getWinRateClass(winRate1);
+            const winRateClass2 = getWinRateClass(winRate2);
+            
+            // Set card classes based on win rates and match status
+            let cardClass = '';
+            
+            if (parseFloat(winRate1) > parseFloat(winRate2)) {
+              cardClass = 'player1-winning';
+            } else if (parseFloat(winRate2) > parseFloat(winRate1)) {
+              cardClass = 'player2-winning';
+            }
+            
+            // First match is the current one being played
+            const isCurrentMatch = index === 0;
+            if (isCurrentMatch) {
+              cardClass += ' current-match';
+            }
+            
+            matchCard.className = `match-card ${cardClass}`;
+            
+            // Get first letters for avatars
+            const p1FirstLetter = player1.name.charAt(0);
+            const p2FirstLetter = player2.name.charAt(0);
+            
+            // Add time information
+            const matchTimeInfo = formatTimeAgo(match.timestamp);
+            
+            matchCard.innerHTML = `
+              <div class="match-header">
+                ${isCurrentMatch ? 
+                  `<div class="current-match-indicator"><span class="pulse-dot"></span> LIVE MATCH</div>` : 
+                  `MATCH #${index+1}`
+                }
+                <span class="match-time">${matchTimeInfo}</span>
+              </div>
+              
+              <div class="match-content">
+                <div class="match-players">
+                  <div class="match-player">
+                    <div class="player-avatar">${p1FirstLetter}</div>
+                    <div class="match-player-name">${player1.name}</div>
+                    <div class="match-department">${player1.department}</div>
+                    <div class="win-rate-display ${winRateClass1}">${winRate1}%</div>
+                  </div>
+                  
+                  <div class="vs-badge">VS</div>
+                  
+                  <div class="match-player">
+                    <div class="player-avatar">${p2FirstLetter}</div>
+                    <div class="match-player-name">${player2.name}</div>
+                    <div class="match-department">${player2.department}</div>
+                    <div class="win-rate-display ${winRateClass2}">${winRate2}%</div>
+                  </div>
+                </div>
+              </div>
+            `;
+            
+            matchesContainer.appendChild(matchCard);
+          }
+        });
+      }
+
+      // Initial render sorted by wins descending
+      renderPlayers(sortPlayers('wins'));
+      renderMatches();
+      
+      // Start countdown timer and update every second
+      updateCountdown(); // Initial call to set the countdown immediately
+      setInterval(updateCountdown, 1000);
+      
+      // Force immediate countdown update to fix "Loading..." issue
+      setTimeout(updateCountdown, 100);
+
+      // Search functionality
+      document.getElementById('player-search').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const filteredPlayers = players.filter(player => 
+          player.name.toLowerCase().includes(searchTerm)
+        );
+        
+        renderPlayers(sortPlayers('wins', 'desc', filteredPlayers));
+      });
+      
+      // Check for updates in localStorage
+      window.addEventListener('storage', function(e) {
+        if (e.key === 'tekkenPlayers' || e.key === 'tekkenMatches') {
+          location.reload();
+        } else if (e.key === 'tekkenTournamentInfo') {
+          // Update just the tournament stats without full page reload
+          updateTournamentStats();
+        }
+      });
+    </script>
+  </body>
+</html>

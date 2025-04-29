@@ -1,0 +1,761 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tekken Tournament Brackets</title>
+  <script src="database.js"></script>
+  <style>
+    :root {
+      --primary: #ff5722;
+      --primary-dark: #e64a19;
+      --secondary: #2196F3;
+      --accent: #FFCC00;
+      --dark: #121212;
+      --darker: #0D0E13;
+      --surface: #222222;
+      --surface-light: #333333;
+      --text: #ffffff;
+      --text-secondary: #aaaaaa;
+      --border: #444444;
+      --success: #4CAF50;
+      --warning: #FFC107;
+      --danger: #F44336;
+      --inactive: #757575;
+    }
+    
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background-color: var(--dark);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 15px;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .header h1 {
+      color: var(--primary);
+      margin-bottom: 0;
+      font-size: 28px;
+      text-transform: uppercase;
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 15px;
+    }
+    
+    .nav-link {
+      color: var(--text);
+      text-decoration: none;
+      padding: 8px 12px;
+      background-color: var(--surface);
+      border-radius: 4px;
+      transition: background-color 0.3s;
+      border: 1px solid var(--border);
+    }
+    
+    .nav-link:hover {
+      background-color: var(--surface-light);
+      border-color: var(--primary);
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+    
+    .admin-alert {
+      background-color: var(--danger);
+      color: white;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .main-content {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 20px;
+    }
+    
+    @media (max-width: 992px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .sidebar {
+      background-color: var(--surface);
+      border-radius: 8px;
+      padding: 20px;
+      height: fit-content;
+    }
+    
+    .sidebar h2 {
+      color: var(--primary);
+      margin-top: 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 1.2rem;
+    }
+    
+    .bracket-container {
+      background-color: var(--surface);
+      border-radius: 8px;
+      padding: 20px;
+      overflow: auto;
+      min-height: 500px;
+    }
+    
+    .bracket-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--text-secondary);
+    }
+    
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background-color: var(--surface-light);
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+    
+    select {
+      cursor: pointer;
+    }
+    
+    button {
+      background-color: var(--primary);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+    
+    button:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+    
+    button:disabled {
+      background-color: var(--inactive);
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .button-success {
+      background-color: var(--success);
+    }
+    
+    .button-success:hover {
+      background-color: #388E3C;
+    }
+    
+    .button-warning {
+      background-color: var(--warning);
+      color: var(--darker);
+    }
+    
+    .button-warning:hover {
+      background-color: #FFA000;
+    }
+    
+    .button-danger {
+      background-color: var(--danger);
+    }
+    
+    .button-danger:hover {
+      background-color: #D32F2F;
+    }
+    
+    /* Player list styles */
+    .player-list {
+      margin-top: 20px;
+    }
+    
+    .player-list h3 {
+      color: var(--primary);
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+    
+    .player-count {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 10px;
+      background-color: var(--surface-light);
+      border-radius: 4px;
+    }
+    
+    .player-count span {
+      font-weight: bold;
+      color: var(--accent);
+    }
+    
+    .player-validation {
+      padding: 8px 12px;
+      margin-bottom: 15px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    
+    .player-validation.valid {
+      background-color: rgba(76, 175, 80, 0.2);
+      color: #81C784;
+      border: 1px solid #388E3C;
+    }
+    
+    .player-validation.invalid {
+      background-color: rgba(244, 67, 54, 0.2);
+      color: #E57373;
+      border: 1px solid #D32F2F;
+    }
+    
+    .player-items {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+    
+    .player-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .player-item:last-child {
+      border-bottom: none;
+    }
+    
+    .player-item:hover {
+      background-color: var(--surface-light);
+    }
+    
+    .player-name {
+      font-weight: bold;
+    }
+    
+    .player-department {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    
+    .player-seed {
+      background-color: var(--accent);
+      color: var(--darker);
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+    
+    /* Bracket styles */
+    .bracket-type-toggle {
+      display: flex;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    
+    .bracket-type-option {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      background-color: var(--surface-light);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .bracket-type-option.active {
+      background-color: var(--primary);
+      color: white;
+      font-weight: bold;
+    }
+    
+    .bracket {
+      display: flex;
+      justify-content: flex-start;
+      overflow-x: auto;
+      padding-bottom: 20px;
+    }
+    
+    .bracket-round {
+      margin-right: 40px;
+      min-width: 220px;
+    }
+    
+    .bracket-round-title {
+      text-align: center;
+      color: var(--primary);
+      font-weight: bold;
+      margin-bottom: 15px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--primary);
+    }
+    
+    .bracket-match {
+      background-color: var(--surface-light);
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 15px;
+      position: relative;
+    }
+    
+    .bracket-match.current {
+      border: 2px solid var(--primary);
+      box-shadow: 0 0 10px rgba(255, 87, 34, 0.3);
+    }
+    
+    .bracket-match.completed {
+      border-left: 4px solid var(--success);
+    }
+    
+    .bracket-player {
+      padding: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 5px;
+    }
+    
+    .bracket-player:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    
+    .bracket-player.winner {
+      font-weight: bold;
+      color: var(--success);
+    }
+    
+    .bracket-player.loser {
+      color: var(--text-secondary);
+    }
+    
+    .bracket-player-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 150px;
+    }
+    
+    .bracket-player-score {
+      min-width: 25px;
+      height: 25px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: var(--surface);
+      border-radius: 4px;
+      font-size: 0.8rem;
+      color: var(--text);
+    }
+    
+    .bracket-player.winner .bracket-player-score {
+      background-color: var(--success);
+      color: white;
+    }
+    
+    /* Match detail view */
+    .match-detail {
+      background-color: var(--surface);
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    
+    .match-detail h2 {
+      color: var(--primary);
+      margin-top: 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 1.2rem;
+    }
+    
+    .match-detail-players {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 15px 0;
+    }
+    
+    .match-player {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .match-player-name {
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin-bottom: 5px;
+    }
+    
+    .match-player-department {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    
+    .versus {
+      font-size: 1.2rem;
+      color: var(--primary);
+      font-weight: bold;
+      margin: 0 15px;
+    }
+    
+    .match-score-inputs {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .score-input-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .score-input-group label {
+      font-size: 0.8rem;
+      margin-bottom: 5px;
+    }
+    
+    .score-input-group input {
+      width: 60px;
+      text-align: center;
+      font-size: 1.2rem;
+      padding: 10px;
+    }
+    
+    .match-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .match-actions button {
+      width: auto;
+      min-width: 120px;
+    }
+    
+    /* Status indicator */
+    .status-indicator {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: var(--surface);
+      padding: 10px 15px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+      cursor: move;
+    }
+    
+    .status {
+      font-weight: bold;
+    }
+    
+    .status.connected {
+      color: var(--success);
+    }
+    
+    .status.error {
+      color: var(--danger);
+    }
+    
+    .last-sync {
+      color: var(--text-secondary);
+      margin-left: 5px;
+      font-size: 0.7rem;
+    }
+    
+    /* Tournament summary */
+    .tournament-summary {
+      margin-bottom: 20px;
+      background-color: var(--surface-light);
+      border-radius: 8px;
+      padding: 15px;
+    }
+    
+    .summary-title {
+      color: var(--accent);
+      font-weight: bold;
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+    
+    .summary-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    
+    .summary-stat {
+      background-color: var(--surface);
+      padding: 10px;
+      border-radius: 4px;
+    }
+    
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+    }
+    
+    .stat-value {
+      font-weight: bold;
+      color: var(--primary);
+      font-size: 1.1rem;
+    }
+
+    /* Loading animation */
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 200px;
+    }
+
+    .loading::after {
+      content: "";
+      width: 40px;
+      height: 40px;
+      border: 5px solid var(--surface-light);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spinner 1s linear infinite;
+    }
+
+    @keyframes spinner {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Info messages */
+    .info-message {
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .info-error {
+      background-color: rgba(244, 67, 54, 0.1);
+      color: #EF9A9A;
+      border: 1px solid #C62828;
+    }
+
+    .info-warning {
+      background-color: rgba(255, 193, 7, 0.1);
+      color: #FFE082;
+      border: 1px solid #FFA000;
+    }
+
+    .info-success {
+      background-color: rgba(76, 175, 80, 0.1);
+      color: #A5D6A7;
+      border: 1px solid #2E7D32;
+    }
+  </style>
+<script src="https://lib.yourware.so/yourware-lib.umd.js" id="yourware-lib"></script></head>
+<body>
+  <div class="status-indicator" id="db-status">Database: <span class="status">Connecting...</span></div>
+  
+  <div class="container">
+    <div class="header">
+      <h1>TEKKEN TOURNAMENT BRACKETS</h1>
+      <div class="nav-links">
+        <a href="index.html" class="nav-link">Dashboard</a>
+        <a href="admin.html" class="nav-link">Admin Panel</a>
+      </div>
+    </div>
+    
+    <div id="admin-check" class="admin-alert hidden">
+      <p>⚠️ This page is only accessible to administrators. Please log in to continue.</p>
+    </div>
+    
+    <div id="main-tournament-content" class="main-content">
+      <!-- Sidebar with controls -->
+      <div class="sidebar">
+        <h2>Tournament Controls</h2>
+        
+        <div class="bracket-controls">
+          <div class="form-group">
+            <label for="bracket-type">Bracket Type</label>
+            <select id="bracket-type">
+              <option value="single">Single Elimination</option>
+              <option value="double">Double Elimination</option>
+            </select>
+          </div>
+          
+          <div class="tournament-summary">
+            <div class="summary-title">Tournament Summary</div>
+            <div class="summary-stats">
+              <div class="summary-stat">
+                <div class="stat-label">Players</div>
+                <div class="stat-value" id="player-count">0</div>
+              </div>
+              <div class="summary-stat">
+                <div class="stat-label">Matches</div>
+                <div class="stat-value" id="match-count">0</div>
+              </div>
+              <div class="summary-stat">
+                <div class="stat-label">Current Round</div>
+                <div class="stat-value" id="current-round">-</div>
+              </div>
+              <div class="summary-stat">
+                <div class="stat-label">Status</div>
+                <div class="stat-value" id="tournament-status">Not Started</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="player-list">
+            <h3>Participants</h3>
+            <div class="player-count">
+              Total Players: <span id="player-count-value">0</span>
+            </div>
+            
+            <div id="player-validation" class="player-validation">
+              Please add players to begin tournament
+            </div>
+            
+            <div id="players-container" class="player-items">
+              <!-- Player items will be inserted here -->
+            </div>
+
+            <div style="margin-top: 15px;">
+              <button id="btn-seed-players" disabled>Auto-Seed Players</button>
+            </div>
+          </div>
+          
+          <div style="margin-top: 15px;">
+            <button id="btn-generate-bracket" class="button-success" disabled>Generate Bracket</button>
+            <button id="btn-reset-bracket" class="button-danger" disabled style="margin-top: 10px;">Reset Bracket</button>
+            <button id="btn-save-tournament" style="margin-top: 10px;">Save Tournament State</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Bracket visualization area -->
+      <div class="bracket-container">
+        <div class="bracket-type-toggle">
+          <div class="bracket-type-option active" data-view="bracket">Bracket View</div>
+          <div class="bracket-type-option" data-view="matches">Matches View</div>
+        </div>
+        
+        <div id="bracket-view">
+          <div id="loading-bracket" class="loading"></div>
+          <div id="bracket-display" class="bracket hidden">
+            <!-- Bracket will be generated here -->
+          </div>
+        </div>
+        
+        <div id="matches-view" class="hidden">
+          <div id="upcoming-matches">
+            <h2>Upcoming Matches</h2>
+            <div id="upcoming-matches-list">
+              <!-- Upcoming matches will be listed here -->
+            </div>
+          </div>
+          
+          <div id="completed-matches" style="margin-top: 20px;">
+            <h2>Completed Matches</h2>
+            <div id="completed-matches-list">
+              <!-- Completed matches will be listed here -->
+            </div>
+          </div>
+        </div>
+        
+        <!-- Match Details Section (initially hidden) -->
+        <div id="match-detail" class="match-detail hidden">
+          <h2>Match Details</h2>
+          <div class="match-detail-players">
+            <div class="match-player" id="player1-details">
+              <div class="match-player-name">Player 1</div>
+              <div class="match-player-department">Department</div>
+            </div>
+            <div class="versus">VS</div>
+            <div class="match-player" id="player2-details">
+              <div class="match-player-name">Player 2</div>
+              <div class="match-player-department">Department</div>
+            </div>
+          </div>
+          
+          <div class="match-score-inputs">
+            <div class="score-input-group">
+              <label>Player 1 Score</label>
+              <input type="number" id="player1-score" min="0" value="0">
+            </div>
+            <div class="score-input-group">
+              <label>Player 2 Score</label>
+              <input type="number" id="player2-score" min="0" value="0">
+            </div>
+          </div>
+          
+          <div class="match-actions">
+            <button id="save-match-result" class="button-success">Save Result</button>
+            <button id="cancel-match-edit" class="button-danger">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="tournament-brackets.js"></script>
+</body>
+</html>
